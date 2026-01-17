@@ -1,0 +1,23 @@
+name: C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Compile tests
+      run: make -j tests BASH_COLORS=1
+    - name: Execute tests
+      run: bin/tests
