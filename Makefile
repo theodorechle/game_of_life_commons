@@ -6,7 +6,7 @@ OBJ_DIR=obj
 SRC_DIR=src
 TESTS_DIR=tests
 TESTS_LIB=cpp_tests/bin/cpp_tests_lib
-LIB=bin/cpp_tests_lib
+LIB=bin/game_of_life_commons_lib
 
 # Subdirectories
 SUBDIRS=network_input_handler
