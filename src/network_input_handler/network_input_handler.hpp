@@ -2,14 +2,12 @@
 #define NETWORK_INPUT_HANDLER_HPP
 
 #include <algorithm>
+#include <stdexcept>
 #include <string>
 #include <sys/socket.h>
-#include <stdexcept>
 #ifdef DEBUG
 #include <iostream>
 #endif
-
-constexpr size_t BUFFER_LENGTH = 1024;
 
 class NetworkInputHandler {
     int _socket;
@@ -18,7 +16,7 @@ class NetworkInputHandler {
     size_t _index = 0;
 
 public:
-    NetworkInputHandler(int socket, size_t bufferSize = BUFFER_LENGTH);
+    NetworkInputHandler(int socket, size_t bufferSize = 1024);
 
     int read(size_t length, std::string &out);
 
