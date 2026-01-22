@@ -49,16 +49,16 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
 }
 
 int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter, bool flushDelimiter) {
+    bool flush = (!includeDelimiter && flushDelimiter);
     size_t index = _buffer.find(delimiter, _index);
     if (index == std::string::npos) {
         out = _buffer.substr(_index);
-        _index += out.size();
         _buffer.clear();
         _index = 0;
     }
     else {
         out = _buffer.substr(_index, index + includeDelimiter);
-        _index += out.size() + (!includeDelimiter && flushDelimiter);
+        _index += index - _index + flush;
         return 0;
     }
 
@@ -121,6 +121,7 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
             return 1; // error, can't read any more bytes.
         }
     }
-    _buffer = std::string(buffer + bytesAdded, bytesRead - bytesAdded - (!includeDelimiter && flushDelimiter));
+    _buffer =
+        std::string(buffer + bytesAdded + flush, bytesRead - bytesAdded - flush);
     return 0;
 }
