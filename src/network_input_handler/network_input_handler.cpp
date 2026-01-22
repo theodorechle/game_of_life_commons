@@ -48,7 +48,7 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
     return 0;
 }
 
-int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out) {
+int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter, bool flushDelimiter) {
     size_t index = _buffer.find(delimiter, _index);
     if (index == std::string::npos) {
         out = _buffer.substr(_index);
@@ -57,8 +57,8 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out) {
         _index = 0;
     }
     else {
-        out = _buffer.substr(_index, index + 1);
-        _index += out.size();
+        out = _buffer.substr(_index, index + includeDelimiter);
+        _index += out.size() + (!includeDelimiter && flushDelimiter);
         return 0;
     }
 
@@ -97,7 +97,7 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out) {
 #endif
 
         if (pos != bufferEnd) {
-            bytesAdded = pos - buffer + 1;
+            bytesAdded = pos - buffer + includeDelimiter;
 #ifdef DEBUG
             std::cerr << "found, appending to out(size=" << out.size() << ") " << bytesAdded << " bytes:\n";
             std::cerr << std::string(buffer, bytesAdded) << "\n";
@@ -121,6 +121,6 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out) {
             return 1; // error, can't read any more bytes.
         }
     }
-    _buffer = std::string(buffer + bytesAdded, bytesRead - bytesAdded);
+    _buffer = std::string(buffer + bytesAdded, bytesRead - bytesAdded - (!includeDelimiter && flushDelimiter));
     return 0;
 }

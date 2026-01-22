@@ -334,7 +334,7 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        if (output == message) return test::Result::SUCCESS;
+        if (output == "Hell") return test::Result::SUCCESS;
         std::cerr << "Expected '" << message << "', received: '" << output << "'\n";
         return test::Result::FAILURE;
     }
@@ -361,7 +361,7 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        if (output == message) return test::Result::SUCCESS;
+        if (output == "Hell") return test::Result::SUCCESS;
         std::cerr << "Expected '" << message << "', received: '" << output << "'\n";
         return test::Result::FAILURE;
     }
@@ -459,8 +459,8 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        if (output != hello) {
-            std::cerr << "Expected '" << hello << "', received: '" << output << "'\n";
+        if (output != "Hell") {
+            std::cerr << "Expected 'Hell', received: '" << output << "'\n";
             close(fakeSocket[0]);
             close(fakeSocket[1]);
             return test::Result::FAILURE;
@@ -476,8 +476,8 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        if (output != world) {
-            std::cerr << "Expected '" << world << "', received: '" << output << "'\n";
+        if (output != "oworl") {
+            std::cerr << "Expected 'oworl', received: '" << output << "'\n";
             return test::Result::FAILURE;
         }
 
@@ -508,8 +508,8 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        if (output != hello) {
-            std::cerr << "Expected '" << hello << "', received: '" << output << "'\n";
+        if (output != "Hell") {
+            std::cerr << "Expected 'Hell', received: '" << output << "'\n";
             close(fakeSocket[0]);
             close(fakeSocket[1]);
             return test::Result::FAILURE;
@@ -525,8 +525,8 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        if (output != world) {
-            std::cerr << "Expected '" << world << "', received: '" << output << "'\n";
+        if (output != "oworl") {
+            std::cerr << "Expected 'oworl', received: '" << output << "'\n";
             return test::Result::FAILURE;
         }
 
@@ -557,6 +557,186 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
+        if (output != "Hell") {
+            std::cerr << "Expected 'Hell', received: '" << output << "'\n";
+            close(fakeSocket[0]);
+            close(fakeSocket[1]);
+            return test::Result::FAILURE;
+        }
+
+        errorCode = inputHandler.readUntilDelimiter('d', output);
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output != "oworl") {
+            std::cerr << "Expected 'oworl', received: '" << output << "'\n";
+            return test::Result::FAILURE;
+        }
+
+        return test::Result::SUCCESS;
+    }
+
+
+
+
+
+
+
+
+
+    test::Result testReadUntilDelimiterIncludingDelimiterSmallerThanBufferSize() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 10);
+
+        const char *message = "Hello";
+        write(fakeSocket[1], message, strlen(message));
+
+        std::string output;
+
+        int errorCode = inputHandler.readUntilDelimiter('o', output, true);
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output == message) return test::Result::SUCCESS;
+        std::cerr << "Expected '" << message << "', received: '" << output << "'\n";
+        return test::Result::FAILURE;
+    }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterBiggerThanBufferSize() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 2);
+
+        const char *message = "Hello";
+        write(fakeSocket[1], message, strlen(message));
+
+        std::string output;
+
+        int errorCode = inputHandler.readUntilDelimiter('o', output, true);
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output == message) return test::Result::SUCCESS;
+        std::cerr << "Expected '" << message << "', received: '" << output << "'\n";
+        return test::Result::FAILURE;
+    }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessage() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 5);
+
+        const char *message = "Hello";
+        write(fakeSocket[1], message, strlen(message));
+
+        std::string output;
+
+        int errorCode = inputHandler.readUntilDelimiter('a', output, true);
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (!errorCode) {
+            std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeSmallerThanBuffer() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 7);
+
+        const char *message = "Hello";
+        write(fakeSocket[1], message, strlen(message));
+
+        std::string output;
+
+        int errorCode = inputHandler.readUntilDelimiter('a', output, true);
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (!errorCode) {
+            std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 2);
+
+        const char *message = "Hello";
+        write(fakeSocket[1], message, strlen(message));
+
+        std::string output;
+
+        int errorCode = inputHandler.readUntilDelimiter('a', output, true);
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (!errorCode) {
+            std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoFitsInTheBuffer() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 12);
+
+        const char *hello = "Hello";
+        const char *world = "world";
+        write(fakeSocket[1], hello, strlen(hello));
+        write(fakeSocket[1], world, strlen(world));
+
+        std::string output;
+        int errorCode;
+
+        errorCode = inputHandler.readUntilDelimiter('o', output, true);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            close(fakeSocket[0]);
+            close(fakeSocket[1]);
+            return test::Result::FAILURE;
+        }
+
         if (output != hello) {
             std::cerr << "Expected '" << hello << "', received: '" << output << "'\n";
             close(fakeSocket[0]);
@@ -564,7 +744,7 @@ namespace networkTests {
             return test::Result::FAILURE;
         }
 
-        errorCode = inputHandler.readUntilDelimiter('d', output);
+        errorCode = inputHandler.readUntilDelimiter('d', output, true);
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
@@ -581,6 +761,105 @@ namespace networkTests {
 
         return test::Result::SUCCESS;
     }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 3);
+
+        const char *hello = "Hello";
+        const char *world = "world";
+        write(fakeSocket[1], hello, strlen(hello));
+        write(fakeSocket[1], world, strlen(world));
+
+        std::string output;
+        int errorCode;
+
+        errorCode = inputHandler.readUntilDelimiter('o', output, true);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            close(fakeSocket[0]);
+            close(fakeSocket[1]);
+            return test::Result::FAILURE;
+        }
+
+        if (output != hello) {
+            std::cerr << "Expected '" << hello << "', received: '" << output << "'\n";
+            close(fakeSocket[0]);
+            close(fakeSocket[1]);
+            return test::Result::FAILURE;
+        }
+
+        errorCode = inputHandler.readUntilDelimiter('d', output, true);
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output != world) {
+            std::cerr << "Expected '" << world << "', received: '" << output << "'\n";
+            return test::Result::FAILURE;
+        }
+
+        return test::Result::SUCCESS;
+    }
+
+    test::Result testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoEachFitsInTheBuffer() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 5);
+
+        const char *hello = "Hello";
+        const char *world = "world";
+        write(fakeSocket[1], hello, strlen(hello));
+        write(fakeSocket[1], world, strlen(world));
+
+        std::string output;
+        int errorCode;
+
+        errorCode = inputHandler.readUntilDelimiter('o', output, true);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            close(fakeSocket[0]);
+            close(fakeSocket[1]);
+            return test::Result::FAILURE;
+        }
+
+        if (output != hello) {
+            std::cerr << "Expected '" << hello << "', received: '" << output << "'\n";
+            close(fakeSocket[0]);
+            close(fakeSocket[1]);
+            return test::Result::FAILURE;
+        }
+
+        errorCode = inputHandler.readUntilDelimiter('d', output, true);
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output != world) {
+            std::cerr << "Expected '" << world << "', received: '" << output << "'\n";
+            return test::Result::FAILURE;
+        }
+
+        return test::Result::SUCCESS;
+    }
+
 
     void testNetwork(test::Tests *tests) {
         tests->beginTestBlock("test network input handler");
@@ -602,6 +881,7 @@ namespace networkTests {
 
         tests->endTestBlock();
         tests->beginTestBlock("test read until delimiter");
+        tests->beginTestBlock("not including delimiter");
 
         tests->addTest(testReadUntilDelimiterSmallerThanBufferSize, "read until delimiter smaller than buffer size");
         tests->addTest(testReadUntilDelimiterBiggerThanBufferSize, "read until delimiter bigger than buffer size");
@@ -614,6 +894,21 @@ namespace networkTests {
         tests->addTest(testReadUntilDelimiterTwoMessagesWhoDoesntFitsInTheBuffer, "read until delimiter two messages who doesn't fits in the buffer");
         tests->addTest(testReadUntilDelimiterTwoMessagesWhoEachFitsInTheBuffer, "read until delimiter two messages who each fits in the buffer");
 
+        tests->endTestBlock();
+        tests->beginTestBlock("including delimiter");
+
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterSmallerThanBufferSize, "read until delimiter including delimiter smaller than buffer size");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterBiggerThanBufferSize, "read until delimiter including delimiter bigger than buffer size");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessage, "read until delimiter including delimiter asking for delimiter who is not in message");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeSmallerThanBuffer,
+                       "read until delimiter including delimiter asking for delimiter who is not in message with message having size smaller than buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer,
+                       "read until delimiter including delimiter asking for delimiter who is not in message with message having size bigger than buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoFitsInTheBuffer, "read until including delimiter delimiter two messages who fits in the buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer, "read until including delimiter delimiter two messages who doesn't fits in the buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoEachFitsInTheBuffer, "read until including delimiter delimiter two messages who each fits in the buffer");
+
+        tests->endTestBlock();
         tests->endTestBlock();
         tests->endTestBlock();
     }

@@ -21,9 +21,9 @@ public:
     int read(size_t length, std::string &out);
 
     /**
-     * returns a string who contains the network input before and including the delimiter.
+     * flushDelimiter is only checked if includeDelimiter is false
      */
-    int readUntilDelimiter(char delimiter, std::string &out);
+    int readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter = false, bool flushDelimiter = false);
 };
 
 #endif // NETWORK_INPUT_HANDLER_HPP
