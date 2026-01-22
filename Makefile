@@ -62,4 +62,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 clean:
 	@find obj -mindepth 1 ! -name .gitkeep -delete
 	@find bin -mindepth 1 ! -name .gitkeep -delete
-	$(MAKE) -C cpp_gui clean
+	$(MAKE) -C cpp_tests clean
