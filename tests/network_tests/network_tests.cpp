@@ -96,6 +96,28 @@ namespace networkTests {
         return test::Result::FAILURE;
     }
 
+    test::Result testReadCloseSocket() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 2);
+
+        close(fakeSocket[1]);
+
+        std::string output;
+
+        int errorCode = inputHandler.read(5, output);
+
+        close(fakeSocket[0]);
+
+        if (errorCode != 2) {
+            std::cerr << "read returned code " << errorCode << " instead of " << 2 << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
     test::Result testReadAskingForMoreThanSentWithMessageHavingSameSizeAsBuffer() {
         int fakeSocket[2];
         if (createSocket(fakeSocket)) return test::Result::ERROR;
@@ -112,7 +134,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -135,7 +157,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -158,7 +180,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -312,6 +334,28 @@ namespace networkTests {
         return test::Result::SUCCESS;
     }
 
+    test::Result testReadUntilDelimiterCloseSocket() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0], 2);
+
+        close(fakeSocket[1]);
+
+        std::string output;
+
+        int errorCode = inputHandler.readUntilDelimiter('o', output);
+
+        close(fakeSocket[0]);
+
+        if (errorCode != 2) {
+            std::cerr << "read returned code " << errorCode << " instead of " << 2 << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
     test::Result testReadUntilDelimiterSmallerThanBufferSize() {
         int fakeSocket[2];
         if (createSocket(fakeSocket)) return test::Result::ERROR;
@@ -382,7 +426,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -405,7 +449,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -428,7 +472,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -582,11 +626,6 @@ namespace networkTests {
         return test::Result::SUCCESS;
     }
 
-
-
-
-
-
     test::Result testReadUntilDelimiterFlushingDelimiterSmallerThanBufferSize() {
         int fakeSocket[2];
         if (createSocket(fakeSocket)) return test::Result::ERROR;
@@ -657,7 +696,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -680,7 +719,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -703,7 +742,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -857,14 +896,6 @@ namespace networkTests {
         return test::Result::SUCCESS;
     }
 
-
-
-
-
-
-
-
-
     test::Result testReadUntilDelimiterIncludingDelimiterSmallerThanBufferSize() {
         int fakeSocket[2];
         if (createSocket(fakeSocket)) return test::Result::ERROR;
@@ -935,7 +966,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -958,7 +989,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -981,7 +1012,7 @@ namespace networkTests {
         close(fakeSocket[0]);
         close(fakeSocket[1]);
 
-        if (!errorCode) {
+        if (errorCode != 1) {
             std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
             return test::Result::FAILURE;
         }
@@ -1135,7 +1166,6 @@ namespace networkTests {
         return test::Result::SUCCESS;
     }
 
-
     void testNetwork(test::Tests *tests) {
         tests->beginTestBlock("test network input handler");
         tests->addTest(testBufferSizeOfZero, "buffer size of zero");
@@ -1144,6 +1174,7 @@ namespace networkTests {
 
         tests->addTest(testReadSmallerThanBufferSize, "read smaller than buffer size");
         tests->addTest(testReadBiggerThanBufferSize, "read bigger than buffer size");
+        tests->addTest(testReadCloseSocket, "read close socket");
         tests->addTest(testReadAskingForMoreThanSentWithMessageHavingSameSizeAsBuffer,
                        "read bigger than buffer size with message having same size as buffer");
         tests->addTest(testReadAskingForMoreThanSentWithMessageHavingSizeSmallerThanBuffer,
@@ -1156,6 +1187,7 @@ namespace networkTests {
 
         tests->endTestBlock();
         tests->beginTestBlock("test read until delimiter");
+        tests->addTest(testReadUntilDelimiterCloseSocket, "read until delimiter close socket");
         tests->beginTestBlock("not including delimiter");
 
         tests->addTest(testReadUntilDelimiterSmallerThanBufferSize, "read until delimiter smaller than buffer size");
@@ -1172,30 +1204,46 @@ namespace networkTests {
         tests->endTestBlock();
         tests->beginTestBlock("flushing delimiter");
 
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterSmallerThanBufferSize, "read until delimiter flushing delimiter smaller than buffer size");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterBiggerThanBufferSize, "read until delimiter flushing delimiter bigger than buffer size");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterAskingForDelimiterWhoIsNotInMessage, "read until delimiter flushing delimiter asking for delimiter who is not in message");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeSmallerThanBuffer,
-                       "read until delimiter flushing delimiter asking for delimiter who is not in message with message having size smaller than buffer");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer,
-                       "read until delimiter flushing delimiter asking for delimiter who is not in message with message having size bigger than buffer");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoFitsInTheBuffer, "read until delimiter flushing delimiter two messages who fits in the buffer");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer, "read until delimiter flushing delimiter two messages who doesn't fits in the buffer");
-        tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoEachFitsInTheBuffer, "read until delimiter flushing delimiter two messages who each fits in the buffer");
+        tests->addTest(testReadUntilDelimiterFlushingDelimiterSmallerThanBufferSize,
+                       "read until delimiter flushing delimiter smaller than buffer size");
+        tests->addTest(testReadUntilDelimiterFlushingDelimiterBiggerThanBufferSize,
+                       "read until delimiter flushing delimiter bigger than buffer size");
+        tests->addTest(testReadUntilDelimiterFlushingDelimiterAskingForDelimiterWhoIsNotInMessage,
+                       "read until delimiter flushing delimiter asking for delimiter who is not in message");
+        tests->addTest(
+            testReadUntilDelimiterFlushingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeSmallerThanBuffer,
+            "read until delimiter flushing delimiter asking for delimiter who is not in message with message having size smaller than buffer");
+        tests->addTest(
+            testReadUntilDelimiterFlushingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer,
+            "read until delimiter flushing delimiter asking for delimiter who is not in message with message having size bigger than buffer");
+        tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoFitsInTheBuffer,
+                       "read until delimiter flushing delimiter two messages who fits in the buffer");
+        tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer,
+                       "read until delimiter flushing delimiter two messages who doesn't fits in the buffer");
+        tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoEachFitsInTheBuffer,
+                       "read until delimiter flushing delimiter two messages who each fits in the buffer");
 
         tests->endTestBlock();
         tests->beginTestBlock("including delimiter");
 
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterSmallerThanBufferSize, "read until delimiter including delimiter smaller than buffer size");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterBiggerThanBufferSize, "read until delimiter including delimiter bigger than buffer size");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessage, "read until delimiter including delimiter asking for delimiter who is not in message");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeSmallerThanBuffer,
-                       "read until delimiter including delimiter asking for delimiter who is not in message with message having size smaller than buffer");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer,
-                       "read until delimiter including delimiter asking for delimiter who is not in message with message having size bigger than buffer");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoFitsInTheBuffer, "read until including delimiter delimiter two messages who fits in the buffer");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer, "read until including delimiter delimiter two messages who doesn't fits in the buffer");
-        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoEachFitsInTheBuffer, "read until including delimiter delimiter two messages who each fits in the buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterSmallerThanBufferSize,
+                       "read until delimiter including delimiter smaller than buffer size");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterBiggerThanBufferSize,
+                       "read until delimiter including delimiter bigger than buffer size");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessage,
+                       "read until delimiter including delimiter asking for delimiter who is not in message");
+        tests->addTest(
+            testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeSmallerThanBuffer,
+            "read until delimiter including delimiter asking for delimiter who is not in message with message having size smaller than buffer");
+        tests->addTest(
+            testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer,
+            "read until delimiter including delimiter asking for delimiter who is not in message with message having size bigger than buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoFitsInTheBuffer,
+                       "read until including delimiter delimiter two messages who fits in the buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer,
+                       "read until including delimiter delimiter two messages who doesn't fits in the buffer");
+        tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoEachFitsInTheBuffer,
+                       "read until including delimiter delimiter two messages who each fits in the buffer");
 
         tests->endTestBlock();
         tests->endTestBlock();

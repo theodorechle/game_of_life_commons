@@ -28,6 +28,14 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
 #endif
             return 1;
         }
+        if (bytesRead == 0) {
+#ifdef DEBUG
+            std::cerr << "socket closed\n";
+            std::cerr << "string readed before last recv: \"" << out << "\"\n";
+#endif
+            return 2;
+        }
+
         if (static_cast<size_t>(bytesRead) < _bufferSize && static_cast<size_t>(bytesRead) < length) {
 #ifdef DEBUG
             std::cerr << "can't read as much bytes as needed\n";
@@ -81,6 +89,13 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
             return 1;
+        }
+        if (bytesRead == 0) {
+#ifdef DEBUG
+            std::cerr << "socket closed\n";
+            std::cerr << "string readed before last recv: \"" << out << "\"\n";
+#endif
+            return 2;
         }
 
         char *bufferEnd = buffer + bytesRead;

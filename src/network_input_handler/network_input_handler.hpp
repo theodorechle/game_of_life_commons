@@ -18,10 +18,20 @@ class NetworkInputHandler {
 public:
     NetworkInputHandler(int socket, size_t bufferSize = 1024);
 
+    /**
+     * returns:
+     *  - 0 if no errors
+     *  - 1 on error
+     *  - 2 on socket closed
+     */
     int read(size_t length, std::string &out);
 
     /**
      * flushDelimiter is only checked if includeDelimiter is false
+     * returns:
+     *  - 0 if no errors
+     *  - 1 on error
+     *  - 2 on socket closed
      */
     int readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter = false, bool flushDelimiter = false);
 };
