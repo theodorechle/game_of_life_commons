@@ -55,10 +55,16 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
         out = _buffer.substr(_index);
         _buffer.clear();
         _index = 0;
+#ifdef DEBUG
+        std::cerr << "delimiter not found\n";
+#endif
     }
     else {
         out = _buffer.substr(_index, index + includeDelimiter);
         _index += index - _index + flush;
+#ifdef DEBUG
+        std::cerr << "delimiter found\n";
+#endif
         return 0;
     }
 
@@ -71,7 +77,7 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
 
         if (bytesRead == -1) {
 #ifdef DEBUG
-            std::cerr << "recv returned -1. Is it because of non-blocking? " << (errno != EAGAIN && errno != EWOULDBLOCK) << "\n";
+            std::cerr << "recv returned an error. Is it because of non-blocking? " << (errno != EAGAIN && errno != EWOULDBLOCK) << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
             return 1;
@@ -121,7 +127,6 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
             return 1; // error, can't read any more bytes.
         }
     }
-    _buffer =
-        std::string(buffer + bytesAdded + flush, bytesRead - bytesAdded - flush);
+    _buffer = std::string(buffer + bytesAdded + flush, bytesRead - bytesAdded - flush);
     return 0;
 }
