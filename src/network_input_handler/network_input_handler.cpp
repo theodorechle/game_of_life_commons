@@ -7,8 +7,6 @@ NetworkInputHandler::NetworkInputHandler(int socket, size_t bufferSize) : _socke
 int NetworkInputHandler::read(size_t length, std::string &out) {
     out = _buffer.substr(_index, length);
     _index += out.size();
-    if (length <= _buffer.size() - _index) _index += length;
-    else _buffer.erase(0, length + _index);
     length -= out.size();
     if (length == 0) return 0;
     _buffer.clear();
@@ -19,6 +17,9 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
     size_t bytesAdded = 0;
 
     while (length > 0) {
+#ifdef DEBUG
+        std::cerr << "need to read " << length << " bytes\n";
+#endif
         bytesRead = recv(_socket, buffer, _bufferSize, 0);
 
         if (bytesRead == -1) {
@@ -26,6 +27,7 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
             std::cerr << "recv returned -1. Is it because of non-blocking? " << (errno == EAGAIN || errno == EWOULDBLOCK ? "yes" : "no") << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
+            if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // TODO: don't run indefinitely, wait for something new to be send
             return 1;
         }
         if (bytesRead == 0) {
@@ -46,6 +48,12 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
 #endif
             return 1; // error, can't read as much bytes as needed
         }
+#ifdef DEBUG
+        std::cerr << static_cast<size_t>(bytesRead) << " bytes effectively read\n";
+        std::cerr << "content: '";
+        std::cerr.write(buffer, bytesRead);
+        std::cerr << buffer << "'\n";
+#endif
 
         bytesAdded = std::min(static_cast<size_t>(bytesRead), length);
 
@@ -88,6 +96,7 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
             std::cerr << "recv returned an error. Is it because of non-blocking? " << (errno != EAGAIN && errno != EWOULDBLOCK) << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
+            if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // TODO: don't run indefinitely, wait for something new to be send
             return 1;
         }
         if (bytesRead == 0) {
