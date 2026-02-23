@@ -4,7 +4,7 @@ NetworkInputHandler::NetworkInputHandler(int socket, size_t bufferSize) : _socke
     if (_bufferSize <= 0) throw std::invalid_argument("buffer size should be greater than 0");
 }
 
-int NetworkInputHandler::read(size_t length, std::string &out) {
+int NetworkInputHandler::read(size_t length, std::string &out, bool retryIfNoByteReceived) {
     out = _buffer.substr(_index, length);
     _index += out.size();
     length -= out.size();
@@ -27,7 +27,7 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
             std::cerr << "recv returned -1. Is it because of non-blocking? " << (errno == EAGAIN || errno == EWOULDBLOCK ? "yes" : "no") << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
-            if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // TODO: don't run indefinitely, wait for something new to be send
+            if (out.size() == 0 && retryIfNoByteReceived && errno == EAGAIN || errno == EWOULDBLOCK) continue; // TODO: don't run indefinitely, wait for something new to be send
             return 1;
         }
         if (bytesRead == 0) {
@@ -64,7 +64,7 @@ int NetworkInputHandler::read(size_t length, std::string &out) {
     return 0;
 }
 
-int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter, bool flushDelimiter) {
+int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter, bool flushDelimiter, bool retryIfNoByteReceived) {
     bool flush = (!includeDelimiter && flushDelimiter);
     size_t index = _buffer.find(delimiter, _index);
     if (index == std::string::npos) {
@@ -96,7 +96,7 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
             std::cerr << "recv returned an error. Is it because of non-blocking? " << (errno != EAGAIN && errno != EWOULDBLOCK) << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
-            if (errno == EAGAIN || errno == EWOULDBLOCK) continue; // TODO: don't run indefinitely, wait for something new to be send
+            if (out.size() == 0 && retryIfNoByteReceived && errno == EAGAIN || errno == EWOULDBLOCK) continue; // TODO: don't run indefinitely, wait for something new to be send
             return 1;
         }
         if (bytesRead == 0) {
