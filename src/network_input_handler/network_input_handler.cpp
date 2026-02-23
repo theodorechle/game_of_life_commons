@@ -27,16 +27,18 @@ int NetworkInputHandler::read(size_t length, std::string &out, bool retryIfNoByt
             std::cerr << "recv returned -1. Is it because of non-blocking? " << (errno == EAGAIN || errno == EWOULDBLOCK ? "yes" : "no") << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
-            if (out.size() != 0 || !retryIfNoByteReceived || (errno != EAGAIN && errno != EWOULDBLOCK)) return 1; // TODO: don't run indefinitely, wait for something new to be send
+            if (out.size() == 0 && retryIfNoByteReceived && (errno == EAGAIN || errno == EWOULDBLOCK)) continue; // TODO: don't run indefinitely, wait for something new to be send
+            return 1;
         }
-        else if (bytesRead == 0) {
+        if (bytesRead == 0) {
 #ifdef DEBUG
             std::cerr << "socket closed\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
             return 2;
         }
-        else if (static_cast<size_t>(bytesRead) < _bufferSize && static_cast<size_t>(bytesRead) < length) {
+
+        if (static_cast<size_t>(bytesRead) < _bufferSize && static_cast<size_t>(bytesRead) < length) {
 #ifdef DEBUG
             std::cerr << "can't read as much bytes as needed\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
@@ -74,7 +76,7 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
 #endif
     }
     else {
-        out = _buffer.substr(_index, index - _index + includeDelimiter);
+        out = _buffer.substr(_index, index + includeDelimiter);
         _index += index - _index + flush;
 #ifdef DEBUG
         std::cerr << "delimiter found\n";
@@ -94,10 +96,10 @@ int NetworkInputHandler::readUntilDelimiter(char delimiter, std::string &out, bo
             std::cerr << "recv returned an error. Is it because of non-blocking? " << (errno != EAGAIN && errno != EWOULDBLOCK) << "\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
 #endif
-            if (out.size() != 0 || !retryIfNoByteReceived || (errno != EAGAIN && errno != EWOULDBLOCK)) return 1; // TODO: don't run indefinitely, wait for something new to be send
+            if (out.size() == 0 && retryIfNoByteReceived && (errno == EAGAIN || errno == EWOULDBLOCK)) continue; // TODO: don't run indefinitely, wait for something new to be send
             return 1;
         }
-        else if (bytesRead == 0) {
+        if (bytesRead == 0) {
 #ifdef DEBUG
             std::cerr << "socket closed\n";
             std::cerr << "string readed before last recv: \"" << out << "\"\n";
