@@ -24,7 +24,7 @@ public:
      *  - 1 on error
      *  - 2 on socket closed
      */
-    int read(size_t length, std::string &out, bool retryIfNoByteReceived = true);
+    int read(size_t length, std::string &out, bool retryIfNoByteReceived = false);
 
     /**
      * flushDelimiter is only checked if includeDelimiter is false
@@ -34,7 +34,7 @@ public:
      *  - 2 on socket closed
      */
     int readUntilDelimiter(char delimiter, std::string &out, bool includeDelimiter = false, bool flushDelimiter = false,
-                           bool retryIfNoByteReceived = true);
+                           bool retryIfNoByteReceived = false);
 };
 
 #endif // NETWORK_INPUT_HANDLER_HPP
