@@ -4,6 +4,8 @@
 #include "../../cpp_tests/src/tests.hpp"
 #include "../../src/network_input_handler/network_input_handler.hpp"
 #include <fcntl.h>
+#include <thread>
+#include <mutex>
 
 namespace networkTests {
     /*

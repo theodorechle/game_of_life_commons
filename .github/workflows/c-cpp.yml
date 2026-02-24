@@ -1,4 +1,4 @@
-name: C++ CI
+name: Game of Life commons CI
 
 on:
   push:
@@ -6,9 +6,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  cancel-in-progress: true
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:

@@ -334,6 +334,73 @@ namespace networkTests {
         return test::Result::SUCCESS;
     }
 
+    test::Result testReadRetryIfNoByteReceived() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0]);
+
+        std::string output;
+
+        int errorCode;
+
+        std::thread readThread([&errorCode, &inputHandler, &output] { errorCode = inputHandler.read(5, output, true); });
+
+        const char *message = "Hello";
+
+        std::thread writeThread([fakeSocket, message] {
+            // wait a bit before sending the message.
+            // it's not perfect, since the readThread could have not started, but I don't know of a better way to do it
+            std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(2));
+            write(fakeSocket[1], message, strlen(message));
+        });
+
+        readThread.join();
+        writeThread.join();
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output == message) return test::Result::SUCCESS;
+        std::cerr << "Expected '" << message << "', received: '" << output << "'\n";
+        return test::Result::FAILURE;
+    }
+
+    test::Result testReadRetryIfNoByteReceivedAfterByteReceived() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0]);
+
+        std::string output;
+
+        int errorCode;
+
+        std::thread readThread([&errorCode, &inputHandler, &output] { errorCode = inputHandler.read(10, output, true); });
+
+        const char *message = "Hello";
+
+        std::thread writeThread([fakeSocket, message] { write(fakeSocket[1], message, strlen(message)); });
+
+        readThread.join();
+        writeThread.join();
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode != 1) {
+            std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
     test::Result testReadUntilDelimiterCloseSocket() {
         int fakeSocket[2];
         if (createSocket(fakeSocket)) return test::Result::ERROR;
@@ -1166,12 +1233,80 @@ namespace networkTests {
         return test::Result::SUCCESS;
     }
 
+
+    test::Result testReadUntilDelimiterRetryIfNoByteReceived() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0]);
+
+        std::string output;
+
+        int errorCode;
+
+        std::thread readThread([&errorCode, &inputHandler, &output] { errorCode = inputHandler.readUntilDelimiter('\n', output, true, true, true); });
+
+        const char *message = "Hello\n";
+
+        std::thread writeThread([fakeSocket, message] {
+            // wait a bit before sending the message.
+            // it's not perfect, since the readThread could have not started, but I don't know of a better way to do it
+            std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(2));
+            write(fakeSocket[1], message, strlen(message));
+        });
+
+        readThread.join();
+        writeThread.join();
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode) {
+            std::cerr << "read returned code " << errorCode << "\n";
+            std::cerr << "errno: " << errno << "\n";
+            return test::Result::FAILURE;
+        }
+
+        if (output == message) return test::Result::SUCCESS;
+        std::cerr << "Expected '" << message << "', received: '" << output << "'\n";
+        return test::Result::FAILURE;
+    }
+
+    test::Result testReadUntilDelimiterRetryIfNoByteReceivedAfterByteReceived() {
+        int fakeSocket[2];
+        if (createSocket(fakeSocket)) return test::Result::ERROR;
+
+        NetworkInputHandler inputHandler = NetworkInputHandler(fakeSocket[0]);
+
+        std::string output;
+
+        int errorCode;
+
+        std::thread readThread([&errorCode, &inputHandler, &output] { errorCode = inputHandler.readUntilDelimiter('\n', output, true); });
+
+        const char *message = "Hello";
+
+        std::thread writeThread([fakeSocket, message] { write(fakeSocket[1], message, strlen(message)); });
+
+        readThread.join();
+        writeThread.join();
+
+        close(fakeSocket[0]);
+        close(fakeSocket[1]);
+
+        if (errorCode != 1) {
+            std::cerr << "read didn't failed and returned message \"" << output << "\"\n";
+            return test::Result::FAILURE;
+        }
+        return test::Result::SUCCESS;
+    }
+
+
     void testNetwork(test::Tests *tests) {
         tests->beginTestBlock("test network input handler");
         tests->addTest(testBufferSizeOfZero, "buffer size of zero");
 
         tests->beginTestBlock("test read");
-
         tests->addTest(testReadSmallerThanBufferSize, "read smaller than buffer size");
         tests->addTest(testReadBiggerThanBufferSize, "read bigger than buffer size");
         tests->addTest(testReadCloseSocket, "read close socket");
@@ -1185,11 +1320,16 @@ namespace networkTests {
         tests->addTest(testReadTwoMessagesWhoDoesntFitsInTheBuffer, "read two messages who doesn't fits in the buffer");
         tests->addTest(testReadTwoMessagesWhoEachFitsInTheBuffer, "read two messages who each fits in the buffer");
 
+        tests->beginTestBlock("retry if no byte received");
+        tests->addTest(testReadRetryIfNoByteReceived, "read retry if no byte received");
+        tests->addTest(testReadRetryIfNoByteReceivedAfterByteReceived, "read retry if no byte received after byte received");
         tests->endTestBlock();
+        tests->endTestBlock();
+
         tests->beginTestBlock("test read until delimiter");
         tests->addTest(testReadUntilDelimiterCloseSocket, "read until delimiter close socket");
-        tests->beginTestBlock("not including delimiter");
 
+        tests->beginTestBlock("not including delimiter");
         tests->addTest(testReadUntilDelimiterSmallerThanBufferSize, "read until delimiter smaller than buffer size");
         tests->addTest(testReadUntilDelimiterBiggerThanBufferSize, "read until delimiter bigger than buffer size");
         tests->addTest(testReadUntilDelimiterAskingForDelimiterWhoIsNotInMessage, "read until delimiter asking for delimiter who is not in message");
@@ -1200,10 +1340,9 @@ namespace networkTests {
         tests->addTest(testReadUntilDelimiterTwoMessagesWhoFitsInTheBuffer, "read until delimiter two messages who fits in the buffer");
         tests->addTest(testReadUntilDelimiterTwoMessagesWhoDoesntFitsInTheBuffer, "read until delimiter two messages who doesn't fits in the buffer");
         tests->addTest(testReadUntilDelimiterTwoMessagesWhoEachFitsInTheBuffer, "read until delimiter two messages who each fits in the buffer");
-
         tests->endTestBlock();
-        tests->beginTestBlock("flushing delimiter");
 
+        tests->beginTestBlock("flushing delimiter");
         tests->addTest(testReadUntilDelimiterFlushingDelimiterSmallerThanBufferSize,
                        "read until delimiter flushing delimiter smaller than buffer size");
         tests->addTest(testReadUntilDelimiterFlushingDelimiterBiggerThanBufferSize,
@@ -1222,10 +1361,9 @@ namespace networkTests {
                        "read until delimiter flushing delimiter two messages who doesn't fits in the buffer");
         tests->addTest(testReadUntilDelimiterFlushingDelimiterTwoMessagesWhoEachFitsInTheBuffer,
                        "read until delimiter flushing delimiter two messages who each fits in the buffer");
-
         tests->endTestBlock();
-        tests->beginTestBlock("including delimiter");
 
+        tests->beginTestBlock("including delimiter");
         tests->addTest(testReadUntilDelimiterIncludingDelimiterSmallerThanBufferSize,
                        "read until delimiter including delimiter smaller than buffer size");
         tests->addTest(testReadUntilDelimiterIncludingDelimiterBiggerThanBufferSize,
@@ -1239,12 +1377,17 @@ namespace networkTests {
             testReadUntilDelimiterIncludingDelimiterAskingForDelimiterWhoIsNotInMessageWithMessageHavingSizeBiggerThanBuffer,
             "read until delimiter including delimiter asking for delimiter who is not in message with message having size bigger than buffer");
         tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoFitsInTheBuffer,
-                       "read until including delimiter delimiter two messages who fits in the buffer");
+                       "read until delimiter including delimiter delimiter two messages who fits in the buffer");
         tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoDoesntFitsInTheBuffer,
-                       "read until including delimiter delimiter two messages who doesn't fits in the buffer");
+                       "read until delimiter including delimiter delimiter two messages who doesn't fits in the buffer");
         tests->addTest(testReadUntilDelimiterIncludingDelimiterTwoMessagesWhoEachFitsInTheBuffer,
-                       "read until including delimiter delimiter two messages who each fits in the buffer");
+                       "read until delimiter including delimiter delimiter two messages who each fits in the buffer");
+        tests->endTestBlock();
 
+        tests->beginTestBlock("retry if no byte received");
+        tests->addTest(testReadUntilDelimiterRetryIfNoByteReceived, "read until delimiter retry if no byte received");
+        tests->addTest(testReadUntilDelimiterRetryIfNoByteReceivedAfterByteReceived,
+                       "read until delimiter retry if no byte received after byte received");
         tests->endTestBlock();
         tests->endTestBlock();
         tests->endTestBlock();
